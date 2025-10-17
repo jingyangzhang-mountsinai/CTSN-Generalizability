@@ -75,13 +75,15 @@ LVEF_dat <- dat %>%
 ggplot(LVESVI_dat, aes(x = twoyrLVESVI_estimate, y = study)) + 
   geom_point(aes(size = n)) +
   geom_errorbar(aes(xmin = LVESVI_lower, xmax = LVESVI_upper), width = 0.2) + 
-  geom_vline(xintercept = 1, linetype = "dashed", color = "gray40") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") + 
   scale_size_continuous(name = "Total Sample Size") + 
   theme_minimal(base_size = 14) + 
-  xlab(expression("Esimated LVESVI ("*mL/m^2*")")) + 
+  scale_x_continuous(name = expression("Esimated LVESVI ("*mL/m^2*")"), limits = c(-10, 120)) + 
   labs(y = "Study",
        title = "Forest Plot of Estimated Left Ventricular End-Systolic Volume Index (LVESVI)") + 
-  theme(panel.grid.minor = element_blank())
+  theme(
+    plot.margin = unit(c(0.2, 0.2, 0.2, 0.2), "cm"),  # top, right, bottom, left
+  )
 
 
 
@@ -92,10 +94,13 @@ ggplot(LVESVI_dat, aes(x = twoyrLVESVI_estimate, y = study)) +
 ggplot(LVEF_dat, aes(x = twoyrLVEF_estimate, y = study)) + 
   geom_point(aes(size = n)) +
   geom_errorbar(aes(xmin = LVEF_lower, xmax = LVEF_upper), width = 0.2) + 
-  geom_vline(xintercept = 1, linetype = "dashed", color = "gray40") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") + 
   scale_size_continuous(name = "Total Sample Size") + 
   theme_minimal(base_size = 14) + 
-  xlab("Estimated LVEF (%)") + 
+  scale_x_continuous(name = "Estimated LVEF (%)", limits = c(-10, 120)) + 
   labs(y = "Study",
        title = "Forest Plot of Estimated Left Ventricular Ejection Fraction (LVEF)") + 
-  theme(panel.grid.minor = element_blank())
+  theme(
+    plot.margin = unit(c(0.2, 0.2, 0.2, 0.2), "cm"),  # top, right, bottom, left
+  )
+
