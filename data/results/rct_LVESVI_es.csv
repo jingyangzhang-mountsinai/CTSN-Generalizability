@@ -1,5 +1,5 @@
-Study,n,ctrl,trt,outcome,n_ctrl,n_trt,y_ctrl,sd_ctrl,y_trt,sd_trt,sd_pooled,d
-Goldstein2016,251,mv repair,mv replacement,LVESVI (ml/m^2),126,125,61.1,26.2,65.7,27.3,26.75344514841475,0.17194047250668087
-Michler2016,301,CABG alone,CABG + mv repair,LVESVI (ml/m^2),151,150,54.8,24.9,59.6,25.7,25.301824196929115,0.1897096415910826
-Gammie2022,401,MVS alone,MVS + TA,LVESVI (ml/m^2),203,198,60.7,27.4,54.4,25.8,26.622046002013693,-0.2366459737738967
-Gillinov2015,260,MVS alone,MVS + ablation,LVESVI (ml/m^2),127,133,NA,NA,NA,NA,NA,NA
+study,n,ctrl,trt,outcome,n_ctrl,n_trt,y_ctrl,sd_ctrl,y_trt,sd_trt,sd_pooled,d,se_d
+Goldstein2016,251,mv repair,mv replacement,LVESVI (ml/m^2),126,125,61.1,26.2,65.7,27.3,26.75344514841475,0.17194047250668087,0.12647478976744903
+Michler2016,301,CABG alone,CABG + mv repair,LVESVI (ml/m^2),151,150,54.8,24.9,59.6,25.7,25.301824196929115,0.1897096415910826,0.11553945970199962
+Gammie2022,401,MVS alone,MVS + TA,LVESVI (ml/m^2),203,198,60.7,27.4,54.4,25.8,26.622046002013693,-0.2366459737738967,0.10023367953807075
+Gillinov2015,260,MVS alone,MVS + ablation,LVESVI (ml/m^2),127,133,NA,NA,NA,NA,NA,NA,NA

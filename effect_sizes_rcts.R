@@ -25,6 +25,7 @@ dat_lvesvi <- read_csv("data/rct_LVESVI.csv")
 dat_lvesvi <- dat_lvesvi %>% mutate(
   sd_pooled = sqrt(((n_trt - 1)*sd_trt^2 + (n_ctrl - 1)*sd_ctrl^2) / (n_trt + n_ctrl - 2)),
   d = (y_trt - y_ctrl) / sd_pooled,
+  se_d = sqrt((n_trt + n_ctrl) / (n_trt * n_ctrl) + (d^2) / (2 * (n_trt + n_ctrl - 2)))
   #y_ro1 = (y_trt + y_ctrl) / 2,
   #sd_ro1 = (sd_trt + sd_ctrl)/2
 )
@@ -39,6 +40,7 @@ dat_lvef <- read_csv("data/rct_LVEF.csv")
 dat_lvef <- dat_lvef %>% mutate(
   sd_pooled = sqrt(((n_trt - 1)*sd_trt^2 + (n_ctrl - 1)*sd_ctrl^2) / (n_trt + n_ctrl - 2)),
   d = (y_trt - y_ctrl) / sd_pooled,
+  se_d = sqrt((n_trt + n_ctrl) / (n_trt * n_ctrl) + (d^2) / (2 * (n_trt + n_ctrl - 2)))
   #y_ro1 = (y_trt + y_ctrl) / 2,
   #sd_ro1 = (sd_trt + sd_ctrl)/2
 )
