@@ -45,32 +45,54 @@ forest(m_lvef, xlab = "Effect Size (Cohen's d")
 
 
 ### Method 2: Manually Plot Effect Sizes ###
+base_size <- 5
 
-
-ggplot(dat_lvesvi_es, aes(x = d, y = paste0(study, ": ", ctrl, " vs. ", trt))) + 
+forest_lvesvi <- ggplot(dat_lvesvi_es, aes(x = d, y = paste0(study, ": \n", ctrl, " vs. ", trt))) + 
   geom_point(aes(size = n)) +
   geom_errorbar(aes(xmin = d_lower, xmax = d_upper), width = 0.2) + 
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") + 
   scale_size_continuous(name = "Total Sample Size") + 
-  theme_minimal(base_size = 14) + 
-  scale_x_continuous(name = expression("Standardized Mean Difference In LVESVI ("*mL/m^2*") Between Treatmetn Arms"), limits = c(-1, 1)) + 
-  labs(y = "Study: control vs. treatment") + 
+  scale_x_continuous(name = expression("Standardized Mean Difference In LVESVI ("*mL/m^2*") Between Treatmetn Arms"), 
+                     limits = c(-0.5, 0.5),
+                     expand = c(0, 0)) + 
+  scale_y_discrete(name = "Study:\n control vs. treatment",
+                   expand = c(0.1, 0.1)) + 
+  coord_fixed(ratio = 0.1) + 
+  theme_minimal(base_size = 5) + 
   theme(
+    axis.title = element_text(size = rel(2)),
+    axis.text = element_text(size = rel(1.5)),
+    legend.title = element_text(size = rel(1.5)),
+    legend.text = element_text(size = rel(1)),
+    panel.grid.major = element_line(linewidth = rel(1)),
+    panel.grid.minor = element_line(linewidth = rel(1.5)),
     plot.margin = unit(c(0.2, 0.2, 0.2, 0.2), "cm"),  # top, right, bottom, left
   )
 
 
+ggsave("results/forest_lvesvi.pdf", forest_lvesvi, height = 2, width = 10)
 
-
-ggplot(dat_lvef_es, aes(x = d, y = paste0(study, ": ", ctrl, " vs. ", trt))) + 
+forest_lvef <- ggplot(dat_lvef_es, aes(x = d, y = paste0(study, ": \n", ctrl, " vs. ", trt))) + 
   geom_point(aes(size = n)) +
   geom_errorbar(aes(xmin = d_lower, xmax = d_upper), width = 0.2) + 
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray40") + 
-  scale_size_continuous(name = "Total Sample Size") + 
-  theme_minimal(base_size = 14) + 
-  scale_x_continuous(name ="Standardized Mean Difference in LVEF (%) Between Treatmetn Arms", limits = c(-1, 1)) + 
-  labs(y = "Study: control vs. treatment") + 
+  scale_size_continuous(name = "Total Sample Size",
+                    range = c(1, 4)) + 
+
+  scale_x_continuous(name = "Standardized Mean Difference in LVEF (%) Between Treatmetn Arms", 
+                     limits = c(-0.75, 0.25),
+                     expand = c(0, 0)) + 
+  scale_y_discrete(name = "Study:\n control vs. treatment",
+                   expand = c(0.05, 0)) + 
+  coord_fixed(ratio = 0.1) + 
+  theme_minimal(base_size = 5) + 
   theme(
+    axis.title = element_text(size = rel(2)),
+    axis.text = element_text(size = rel(1.5)),
+    legend.title = element_text(size = rel(1.5)),
+    legend.text = element_text(size = rel(1)),
     plot.margin = unit(c(0.2, 0.2, 0.2, 0.2), "cm"),  # top, right, bottom, left
   )
 
+
+ggsave("results/forest_lvef.pdf", forest_lvef, height = 2, width = 10)
