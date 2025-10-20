@@ -1,0 +1,5 @@
+Study,n,ctrl,trt,outcome,n_ctrl,n_trt,y_ctrl,sd_ctrl,y_trt,sd_trt,sd_pooled,d
+Goldstein2016,251,mv repair,mv replacement,LVEF (%),126,125,42.5,11.8,37.6,11.8,11.8,-0.41525423728813543
+Michler2016,301,CABG alone,CABG + mv repair,LVEF (%),151,150,46.1,10.5,45.6,10,10.253884164950735,-0.04876200978640588
+Gammie2022,401,MVS alone,MVS + TA,LVEF (%),203,198,64.3,7.4,64.1,7.1,7.253430611724203,-0.02757315961315319
+Gillinov2015,260,MVS alone,MVS + ablation,LVEF (%),127,133,56.5,7.7,55.1,7.6,7.649000542706582,-0.1830304485119845

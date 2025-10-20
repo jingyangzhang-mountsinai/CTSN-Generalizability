@@ -1,0 +1,5 @@
+Study,n,ctrl,trt,outcome,n_ctrl,n_trt,y_ctrl,sd_ctrl,y_trt,sd_trt
+Goldstein2016,251,mv repair,mv replacement,LVESVI (ml/m^2),126,125,61.1,26.2,65.7,27.3
+Michler2016,301,CABG alone,CABG + mv repair,LVESVI (ml/m^2),151,150,54.8,24.9,59.6,25.7
+Gammie2022,401,MVS alone,MVS + TA,LVESVI (ml/m^2),203,198,60.7,27.4,54.4,25.8
+Gillinov2015,260,MVS alone,MVS + ablation,LVESVI (ml/m^2),127,133,,,,
