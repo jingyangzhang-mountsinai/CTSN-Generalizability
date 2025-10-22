@@ -121,5 +121,8 @@ ggarrange(forest_lvef, forest_lvesvi, ncol = 1,
 
 forest_lvef_lvesvi <- forest_lvef / forest_lvesvi + plot_layout(guides = "collect")
 
-ggsave("results/forest_lvef_lvesvi.png", 
-       forest_lvef_lvesvi, height = 2, width = 10, limitsize = FALSE, bg = NA)
+ggsave("results/forest_lvef_lvesvi.pdf", 
+       forest_lvef_lvesvi, 
+       height = 2, width = 10, 
+       limitsize = FALSE, bg = "transparent",
+       dpi = 600)
