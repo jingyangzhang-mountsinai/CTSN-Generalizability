@@ -1,5 +1,5 @@
-study,n,ctrl,trt,outcome,n_ctrl,n_trt,y_ctrl,sd_ctrl,y_trt,sd_trt
-Goldstein2016,251,mv repair,mv replacement,LVEF (%),126,125,42.5,11.8,37.6,11.8
-Michler2016,301,CABG alone,CABG + mv repair,LVEF (%),151,150,46.1,10.5,45.6,10
-Gammie2022,401,MVS alone,MVS + TA,LVEF (%),203,198,64.3,7.4,64.1,7.1
-Gillinov2015,260,MVS alone,MVS + ablation,LVEF (%),127,133,56.5,7.7,55.1,7.6
+author_year,study,n,ctrl,trt,outcome,n_ctrl,n_trt,y_ctrl,sd_ctrl,y_trt,sd_trt
+Goldstein2016,CTSN Severe MR,251,mv repair,mv replacement,LVEF (%),126,125,42.5,11.8,37.6,11.8
+Michler2016,CTSN Moderate MR,301,CABG alone,CABG + mv repair,LVEF (%),151,150,46.1,10.5,45.6,10
+Gammie2022,CTSN TR Trial,401,MVS alone,MVS + TA,LVEF (%),203,198,64.3,7.4,64.1,7.1
+Gillinov2015,CTSN AF Trial,260,MVS alone,MVS + ablation,LVEF (%),127,133,56.5,7.7,55.1,7.6
