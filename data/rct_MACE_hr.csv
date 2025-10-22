@@ -1,0 +1,5 @@
+author_year,study,n,ctrl,trt,outcome,n_ctrl,n_trt,HR,lower,upper
+Goldstein2016,CTSN Severe MR,251,mv repair,mv replacement,MACE ,126,125,0.97,0.66,1.42
+Michler2016,CTSN Moderate MR,301,CABG alone,CABG + mv repair,MACE ,151,150,0.9,0.45,1.83
+Gammie2022,CTSN TR Trial,401,MVS alone,MVS + TA,MACE ,203,198,0.69,0.24,1.93
+Gillinov2015,CTSN AF Trial,260,MVS alone,MVS + ablation,MACE ,127,133,1.12,0.67,1.89
