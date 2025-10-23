@@ -1,0 +1,39 @@
+"","variable","type","n_outliers","outliers"
+"proc_day","proc_day","numeric",1,4
+"age","age","numeric",3,c(31, 32, 34)
+"prior_sternotomies_num","prior_sternotomies_num","numeric",3,c(1, 20, 35)
+"graft_num","graft_num","numeric",2,c(1, 6)
+"cpb_mins","cpb_mins","numeric",7,c(280, 296, 299, 304, 315, 341, 391)
+"echo0_day","echo0_day","numeric",16,c(-48, -35, -34, -30, -28, -27, -24, -23, -22, -20, -19, -18, -17, -16, -15, -14)
+"lvesvi0","lvesvi0","numeric",6,c(122.8, 124.9, 131.6, 139.1, 154.2, 161)
+"ero0","ero0","numeric",3,c(0.45, 0.47, 0.49)
+"lvsphere0","lvsphere0","numeric",1,0.83
+"vc0","vc0","numeric",3,c(8.6, 8.7, 10)
+"lvid_ed0","lvid_ed0","numeric",3,c(7.5, 7.8, 8.4)
+"lvid_es0","lvid_es0","numeric",2,c(6.9, 7.6)
+"echo6_day","echo6_day","numeric",23,c(65, 74, 112, 126, 134, 234, 237, 242, 244, 247, 249, 251, 257, 258, 260, 261, 265, 267, 273, 274, 281, 300, 301)
+"lvesvi6","lvesvi6","numeric",2,c(140.2, 235.1)
+"ero6","ero6","numeric",4,c(0.37, 0.38, 0.44, 0.57)
+"lvef6","lvef6","numeric",1,80
+"lvsphere6","lvsphere6","numeric",1,0.34
+"vc6","vc6","numeric",5,c(7.8, 7.9, 8, 8.1, 9)
+"lvid_ed6","lvid_ed6","numeric",2,c(7.4, 7.8)
+"lvid_es6","lvid_es6","numeric",1,6.9
+"echo12_day","echo12_day","numeric",26,c(255, 320, 322, 433, 434, 435, 437, 438, 443, 446, 456, 461, 464, 465, 469, 471, 475, 484, 493, 499, 503, 504, 540, 542, 545, 580)
+"lvesvi12","lvesvi12","numeric",10,c(99.1, 101.5, 104.5, 109.1, 115, 115.7, 117.1, 121.5, 141, 294)
+"ero12","ero12","numeric",6,c(0.34, 0.35, 0.37, 0.39, 0.42, 0.66)
+"lvef12","lvef12","numeric",3,c(14, 17, 18)
+"lvsphere12","lvsphere12","numeric",3,c(0.84, 0.86, 0.92)
+"vc12","vc12","numeric",9,c(7, 7.1, 7.2, 7.4, 7.5, 7.9, 8.3, 8.9, 11)
+"lvid_ed12","lvid_ed12","numeric",2,c(7.4, 7.8)
+"echo24_day","echo24_day","numeric",24,c(632, 687, 777, 783, 784, 786, 787, 788, 790, 797, 798, 799, 802, 812, 818, 826, 830, 837, 838, 839, 857, 880, 927, 929)
+"lvesvi24","lvesvi24","numeric",10,c(86.7, 87.5, 88.6, 92.1, 96.6, 98.3, 98.4, 101.3, 123, 124.2)
+"ero24","ero24","numeric",1,0.57
+"lvef24","lvef24","numeric",2,c(10, 17)
+"lvsphere24","lvsphere24","numeric",2,c(0.39, 0.84)
+"vc24","vc24","numeric",4,c(7.6, 7.8, 8.3, 8.6)
+"lvid_ed24","lvid_ed24","numeric",1,7.7
+"first_chf_day","first_chf_day","numeric",3,c(464, 565, 735)
+"first_whf_day","first_whf_day","numeric",1,805
+"offset_days","offset_days","numeric",40,c(4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 18, 19, 22, 26, 37, 52, 58, 66, 71, 78, 86, 95, 149, 163, 178, 180, 184, 187, 188, 196, 197, 201, 204, 206, 208, 216, 226, 227, 251, 252)
+"last_day_known_alive_in_study","last_day_known_alive_in_study","numeric",38,c(4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 18, 19, 22, 26, 37, 52, 58, 66, 71, 78, 86, 95, 149, 163, 178, 180, 184, 187, 188, 196, 197, 201, 204, 206, 208, 216, 226, 227)

@@ -1,6 +1,8 @@
 # Author: Jingyang (Judy) Zhang
 # Date: Oct 22th, 2025
 # Purpose: explore the MMR dataset.
+## 1. Recode some of the categorical variables.
+## 2. Look at values, missingness, distribution, outliers.
 
 library(haven)
 library(tidyverse)
@@ -8,7 +10,7 @@ library(skimr)
 library(kableExtra)
 library(janitor)
 library(DescTools)
-
+library(knitr)
 ## Read the SAS dataset
 
 mmr <- read_sas("data/mmr_primary.sas7bdat") %>% 
@@ -21,6 +23,13 @@ mmr <- read_sas("data/mmr_primary.sas7bdat") %>%
 
 
 mmr <- mmr %>% mutate(
+  
+  
+  ### Original: cabg alone = 1 cabg + mvrepair = 2
+  ### Recoded: cabg alone = 0 cabg + mvrepair = 1
+  randomization_assignment = ifelse(randomization_assignment == 1, 0, 1),
+  
+  
   ### Original: male = 1 female = 2
   ### Recoded: male = 0 female = 1
   sex = ifelse(sex == 1, 0, 1),
@@ -28,6 +37,12 @@ mmr <- mmr %>% mutate(
   ### Original: hispanic/latino = 1 non-hispanic/latino = 2
   ### Recoded: non-hispanic/latino = 0 hispanic/latino = 1
   ethnicity = ifelse(ethnicity == 1, 1, 0),
+  
+  ### Original: american indian/native = 1 asian = 2 black = 3 hawaiian/pacific = 4 white = 5 other = 98
+  ### Recoded: white = 0 american indian/native = 1 asian = 2 black = 3 hawaiian/pacific = 4 other = 98
+  racial_category = ifelse(racial_category == 5, 0, racial_category),
+  
+  
   
   ### Original: no = 1 yes = 2
   ### Recoded: no = 0 yes = 1
@@ -170,9 +185,56 @@ mmr <- mmr %>% mutate(
   
   ### Original: no = 1 yes = 2
   ### Recoded: no = 0 yes = 1
-  ventricular_arrhythmia = ifelse(ventricular_arrhythmia == 1, 0, 1)
+  ventricular_arrhythmia = ifelse(ventricular_arrhythmia == 1, 0, 1),
+  
+  
+  ### Original: none = 1 mild = 2 moderate = 3 severe = 4 unknown/undocumented = 9
+  ### Recoded: none = 0 mild = 1 moderate = 2 severe = 3 unknon/undocument = 9
+  chronic_lung_disease = ifelse(chronic_lung_disease == 9, chronic_lung_disease, chronic_lung_disease - 1),
+  
+  
+  
+  ## Original: none = 1 trace = 2 mild = 3 moderate = 4 severe = 5
+  ### Recoded: none = 0 trace = 1 mild = 2 moderate = 3 severe = 4
+  mr0 = mr0 - 1,
+  
+  ## Original: none = 1 trace = 2 mild = 3 moderate = 4 severe = 5
+  ### Recoded: none = 0 trace = 1 mild = 2 moderate = 3 severe = 4
+  mr6 = mr6 - 1,
+  
+  ## Original: none = 1 trace = 2 mild = 3 moderate = 4 severe = 5
+  ### Recoded: none = 0 trace = 1 mild = 2 moderate = 3 severe = 4
+  mr12 = mr12 - 1,
+  
+  ## Original: none = 1 trace = 2 mild = 3 moderate = 4 severe = 5
+  ### Recoded: none = 0 trace = 1 mild = 2 moderate = 3 severe = 4
+  mr24 = mr24 - 1,
+  
+  
+  ## Original: class i = 1 class ii = 2 class iii = 3 class iv = 4
+  ### Recoded: class i = 0 class ii = 1 class iii = 2 class iv = 3 
+  nyha0 = nyha0 - 1,
+  
+  ## Original: class i = 1 class ii = 2 class iii = 3 class iv = 4
+  ### Recoded: class i = 0 class ii = 1 class iii = 2 class iv = 3 
+  nyha6 = nyha6 - 1,
+  
+  
+  ## Original: class i = 1 class ii = 2 class iii = 3 class iv = 4
+  ### Recoded: class i = 0 class ii = 1 class iii = 2 class iv = 3 
+  nyha12 = nyha12 - 1,
+  
+  
+  
+  ## Original: class i = 1 class ii = 2 class iii = 3 class iv = 4
+  ### Recoded: class i = 0 class ii = 1 class iii = 2 class iv = 3 
+  nyha24 = nyha24 - 1
+  
+
   
 )
+
+
 
 mmr_skim_summary <- skim(mmr)
 
@@ -185,77 +247,88 @@ kable(mmr_skim_summary) %>%
 
 
 
+## Convert all 0/1 variables into factors
 
-## Explore relationships between baseline predictors and endpoints
-
-## SEX ##
-
-corr_sex_first_mace_day = cor(mmr$sex, mmr$first_mace_day, use = "complete.obs")
-corr_sex_first_mace_day
-
-corr_sex_mace = cor(mmr$sex, mmr$mace, use = "complete.obs")
-corr_sex_mace
+is_binary <- function(x) {
+  vals <- unique(x[!is.na(x)])
+  all(vals %in% c(0, 1, TRUE, FALSE, "0", "1"))
+}
 
 
-
-## AGE ##
-
-corr_age_first_mace_day = cor(mmr$age, mmr$first_mace_day, use = "complete.obs")
-corr_age_first_mace_day
-
-corr_age_mace = cor(mmr$age, mmr$mace, use = "complete.obs")
-corr_age_mace
-
-
-
-## ETHNICITY ##
-corr_ethn_first_mace_day = cor(mmr$ethnicity, mmr$first_mace_day, use = "complete.obs")
-corr_ethn_first_mace_day
-
-corr_ethn_mace = cor(mmr$ethnicity, mmr$mace, use = "complete.obs")
-corr_ethn_mace
-
-
-
-## RACIAL_CATEGORY ##
-
-prop.table(table(mmr$racial_category)) * 100
-
-race <- factor(mmr$racial_category)
-kw_race <- kruskal.test(mmr$first_mace_day ~ race)
-H_race <- kw_race$statistic
-n_first_mace_day <- length(mmr$first_mace_day)
-
-
-# Effect size from kruskal-wallis
-eta_sqr <- (H_race - length(levels(race)) + 1) / (n_first_mace_day - 1)
-
-# Proportion of variance in first_mace_day explained by race. 
-## In this case, the negative means very little difference in first_mace_day between racial categories. 
-eta_sqr
-
-fisher.test(table(race, factor(mmr$mace)))
-CramerV(table(race, factor(mmr$mace)))
+mmr <- mmr %>%
+  mutate(across(
+    .cols = everything(),
+    .fns = ~ {
+      if (is_binary(.x)) {
+        as.factor(.x)  # safely convert to factor
+      } else {
+        .x             # leave as-is
+      }
+    }
+  )) %>% 
+  ## Manually convert categorical variables with more than 2 levels
+  mutate(
+    racial_category = as.factor(racial_category),
+    chronic_lung_disease = as.factor(chronic_lung_disease),
+    across(starts_with("mr"), as.factor),
+    across(starts_with("nyha"), as.factor),
+    across(starts_with("ccsc"), as.factor),
+    mace = as.factor(mace)
+    
+  )
 
 
 
-## ANEURYSMECTOMY ##
-mmr_ANEU <- mmr %>% filter(aneurysmectomy == 1)
-mmr_ANEU_NA <- mmr %>% filter(is.na(aneurysmectomy) == TRUE)
+## Assess numerical and categorical variables separately
+mmr_num <- mmr %>% select(where(is.numeric))
 
+write.csv(mmr_num, file = "data/mmr_num.csv")
 
-mean(mmr_ANEU$first_mace_day, na.rm = TRUE)
-median(mmr_ANEU$first_mace_day, na.rm = TRUE)
-
-mean(mmr_ANEU_NA$first_mace_day, na.rm = TRUE)
-median(mmr_ANEU_NA$first_mace_day, na.rm = TRUE)
+mmr_skim_num_summary <- skim(mmr_num)
 
 
 
+kable(mmr_skim_num_summary) %>% 
+  kable_styling(full_width = FALSE) %>% 
+  save_kable("results/mmr_skim_num_summary.html")
 
 
-mean(mmr_ANEU$mace, na.rm = TRUE)
-median(mmr_ANEU$mace, na.rm = TRUE)
+mmr_categ <- mmr %>% select(where(is.factor))
 
-mean(mmr_ANEU_NA$mace, na.rm = TRUE)
-median(mmr_ANEU_NA$mace, na.rm = TRUE)
+write.csv(mmr_categ, file = "data/mmr_categ.csv")
+
+
+
+## Assess outliers
+
+
+summary_with_outliers <- function(df) {
+  detect_outliers <- function(x) {
+    if(!is.numeric(x)) return(NA)
+    ### Remove NAs
+    x <- na.omit(x)
+    Q1 <- quantile(x, 0.25, na.rm = TRUE)
+    Q3 <- quantile(x, 0.75, na.rm = TRUE)
+    IQR <- Q3 - Q1
+    outliers <- x[x < (Q1 - 1.5 * IQR) | x > (Q3 + 1.5 * IQR)]
+    if(length(outliers) == 0) return(NA)
+    return(unique(sort(outliers)))
+  }
+  
+  data.frame(
+    variable = names(df),
+    type = sapply(df, class),
+    n_outliers = sapply(df, function(x) 
+      if(is.numeric(x)) sum(!is.na(detect_outliers(x))) else NA),
+    outliers = I(sapply(df, detect_outliers))
+  )
+}
+
+
+mmr_outliers <- summary_with_outliers(mmr)
+
+mmr_outliers <- mmr_outliers %>% filter(type != "factor", n_outliers != 0, is.na(n_outliers) == FALSE)
+
+mmr_outliers
+
+write.csv(mmr_outliers, file = "data/results/mmr_outliers.csv")
