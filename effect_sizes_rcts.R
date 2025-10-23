@@ -1,4 +1,5 @@
 # Author: Jingyang (Judy) Zhang
+# Date: Oct 20th, 2025
 # Purpose: calculate effect sizes (Cohen's d) for the four RCTs: 
 ## Goldstein et al., 2016 Two-Year Outcomes of Surgical Treatment of Severe Ischemic Mitral Regurgitation
 ### ctrl: MV Repair trt: MV Replacement
