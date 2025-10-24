@@ -18,6 +18,7 @@ mmr <- read_sas("data/mmr_primary.sas7bdat") %>%
 
 
 
+#### Data Wrangling ####
 
 ## Recode some of the variables for easier analysis
 
@@ -230,9 +231,11 @@ mmr <- mmr %>% mutate(
   ### Recoded: class i = 0 class ii = 1 class iii = 2 class iv = 3 
   nyha24 = nyha24 - 1
   
+) %>% 
 
-  
-)
+## Remove maskid
+select(!maskid)
+
 
 
 
@@ -247,7 +250,7 @@ kable(mmr_skim_summary) %>%
 
 
 
-## Convert all 0/1 variables into factors
+## Set categorical variables to correct type: numeric -> factor
 
 is_binary <- function(x) {
   vals <- unique(x[!is.na(x)])
@@ -279,23 +282,32 @@ mmr <- mmr %>%
 
 
 
-## Assess numerical and categorical variables separately
-mmr_num <- mmr %>% select(where(is.numeric))
 
-write.csv(mmr_num, file = "data/mmr_num.csv")
+
+#### Separate Numerical and Categorical Variables ####
+
+## Numerical
+mmr_num <- mmr %>% 
+  ### Select all numerical columns and add the categorical endpoint.
+  select(where(is.numeric), mace)
+
+write.csv(mmr_num, file = "data/mmr_num.csv", row.names = FALSE)
 
 mmr_skim_num_summary <- skim(mmr_num)
-
-
-
 kable(mmr_skim_num_summary) %>% 
   kable_styling(full_width = FALSE) %>% 
   save_kable("results/mmr_skim_num_summary.html")
 
 
-mmr_categ <- mmr %>% select(where(is.factor))
+## Categorical
+
+mmr_categ <- mmr %>% 
+  ## Select all categorical columns and add the numeric endpoint.
+  select(where(is.factor), first_mace_day)
 
 write.csv(mmr_categ, file = "data/mmr_categ.csv")
+
+
 
 
 
