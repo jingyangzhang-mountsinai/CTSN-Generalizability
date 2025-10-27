@@ -1,0 +1,260 @@
+# Author: Jingyang (Judy) Zhang
+# Date: Oct 27th, 2025
+# Purpose: try causal survival forest on MMR data. 
+
+library(tidyverse)
+library(janitor)
+
+
+
+library(grf)
+library()
+
+## Read the SAS dataset
+
+mmr <- read_sas("data/mmr_primary.sas7bdat") %>% 
+  clean_names()
+
+
+
+#### Data Wrangling ####
+
+## Recode some of the variables for easier analysis
+
+
+mmr <- mmr %>% mutate(
+  
+  
+  ### Original: cabg alone = 1 cabg + mvrepair = 2
+  ### Recoded: cabg alone = 0 cabg + mvrepair = 1
+  randomization_assignment = ifelse(randomization_assignment == 1, 0, 1),
+  
+  
+  ### Original: male = 1 female = 2
+  ### Recoded: male = 0 female = 1
+  sex = ifelse(sex == 1, 0, 1),
+  
+  ### Original: hispanic/latino = 1 non-hispanic/latino = 2
+  ### Recoded: non-hispanic/latino = 0 hispanic/latino = 1
+  ethnicity = ifelse(ethnicity == 1, 1, 0),
+  
+  ### Original: american indian/native = 1 asian = 2 black = 3 hawaiian/pacific = 4 white = 5 other = 98
+  ### Recoded: white = 0 american indian/native = 1 asian = 2 black = 3 hawaiian/pacific = 4 other = 98
+  racial_category = ifelse(racial_category == 5, 0, racial_category),
+  
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  aneurysmectomy = ifelse(aneurysmectomy == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  atrial_fibrillation = ifelse(atrial_fibrillation == 1, 0, 1),
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  cabg = ifelse(cabg == 1, 0, 1),
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  cardiac_transplant = ifelse(cardiac_transplant == 1, 0, 1),
+  
+
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  cardiomyoplasty = ifelse(cardiomyoplasty == 1, 0, 1),
+  
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  carotid_stenosis = ifelse(carotid_stenosis == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  cerebrovascular_disease = ifelse(cerebrovascular_disease == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  diabetes = ifelse(diabetes == 1, 0, 1),
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  dyslipidemia = ifelse(dyslipidemia == 1, 0, 1),
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  family_history_coronary = ifelse(family_history_coronary == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  gastrointestinal_bleeding = ifelse(gastrointestinal_bleeding == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  heart_failure = ifelse(heart_failure == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  heart_surgery = ifelse(heart_surgery == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  hypertension = ifelse(hypertension == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  icd = ifelse(icd == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  infectious_endocarditis = ifelse(infectious_endocarditis == 1, 0, 1),
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  liver_disease = ifelse(liver_disease == 1, 0, 1),
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  malignancy = ifelse(malignancy == 1, 0, 1),
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  myocardial_infarction = ifelse(myocardial_infarction == 1, 0, 1),
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  on_iabp = ifelse(on_iabp == 1, 0, 1),
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  pacemaker = ifelse(pacemaker == 1, 0, 1),
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  pci = ifelse(pci == 1, 0, 1),
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  peripheral_arterial_disease = ifelse(peripheral_arterial_disease == 1, 0, 1),
+  
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  peripheral_vascular_disease = ifelse(peripheral_vascular_disease == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  prior_surgery = ifelse(prior_surgery == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  psychiatric_disorder = ifelse(psychiatric_disorder == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  renal_insufficiency = ifelse(renal_insufficiency == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  stroke = ifelse(stroke == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  thyroid_disease = ifelse(thyroid_disease == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  tia = ifelse(tia == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  tobacco = ifelse(tobacco == 1, 0, 1),
+  
+  ### Original: no = 1 yes = 2
+  ### Recoded: no = 0 yes = 1
+  ventricular_arrhythmia = ifelse(ventricular_arrhythmia == 1, 0, 1),
+  
+  
+  ### Original: none = 1 mild = 2 moderate = 3 severe = 4 unknown/undocumented = 9
+  ### Recoded: none = 0 mild = 1 moderate = 2 severe = 3 unknon/undocument = 9
+  chronic_lung_disease = ifelse(chronic_lung_disease == 9, chronic_lung_disease, chronic_lung_disease - 1),
+  
+  
+  
+  ## Original: none = 1 trace = 2 mild = 3 moderate = 4 severe = 5
+  ### Recoded: none = 0 trace = 1 mild = 2 moderate = 3 severe = 4
+  mr0 = mr0 - 1,
+  
+  ## Original: none = 1 trace = 2 mild = 3 moderate = 4 severe = 5
+  ### Recoded: none = 0 trace = 1 mild = 2 moderate = 3 severe = 4
+  mr6 = mr6 - 1,
+  
+  ## Original: none = 1 trace = 2 mild = 3 moderate = 4 severe = 5
+  ### Recoded: none = 0 trace = 1 mild = 2 moderate = 3 severe = 4
+  mr12 = mr12 - 1,
+  
+  ## Original: none = 1 trace = 2 mild = 3 moderate = 4 severe = 5
+  ### Recoded: none = 0 trace = 1 mild = 2 moderate = 3 severe = 4
+  mr24 = mr24 - 1,
+  
+  
+  ## Original: class i = 1 class ii = 2 class iii = 3 class iv = 4
+  ### Recoded: class i = 0 class ii = 1 class iii = 2 class iv = 3 
+  nyha0 = nyha0 - 1,
+  
+  ## Original: class i = 1 class ii = 2 class iii = 3 class iv = 4
+  ### Recoded: class i = 0 class ii = 1 class iii = 2 class iv = 3 
+  nyha6 = nyha6 - 1,
+  
+  
+  ## Original: class i = 1 class ii = 2 class iii = 3 class iv = 4
+  ### Recoded: class i = 0 class ii = 1 class iii = 2 class iv = 3 
+  nyha12 = nyha12 - 1,
+  
+  
+  
+  ## Original: class i = 1 class ii = 2 class iii = 3 class iv = 4
+  ### Recoded: class i = 0 class ii = 1 class iii = 2 class iv = 3 
+  nyha24 = nyha24 - 1
+  
+) 
+
+
+
+## Select baseline predictors and outcomes of interest.
+
+mmr_dat <- mmr %>% select(age, ethnicity, racial_category, 
+                          aneurysmectomy, atrial_fibrillation, 
+                          cabg, cardiac_transplant, cardiomyoplasty, carotid_stenosis, cerebrovascular_disease, chronic_lung_disease,
+                          diabetes, dyslipidemia, 
+                          family_history_coronary,
+                          gastrointestinal_bleeding,
+                          heart_failure, heart_surgery,
+                          icd, infectious_endocarditis, 
+                          liver_disease,
+                          malignancy, myocardial_infarction,
+                          on_iabp, 
+                          pacemaker, pci, peripheral_arterial_disease, peripheral_vascular_disease, prior_sternotomies_num, prior_surgery, psychiatric_disorder,
+                          renal_insufficiency, 
+                          stroke, 
+                          thyroid_disease, tia, tobacco, 
+                          ventricular_arrhythmia, 
+                          echo0_day, lvesvi0, ero0, lvef0, lvsphere0, vc0, lvid_ed0, lvid_es0, mr0, nyha0, ccsc0, first_mace_day, mace)
+
+## Drop all missing values
+
+mmr_dat <- mmr_dat %>% drop_na()
+
