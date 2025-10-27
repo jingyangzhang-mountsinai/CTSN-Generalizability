@@ -1,16 +1,11 @@
 # Author: Jingyang (Judy) Zhang
-# Date: Oct 22th, 2025
-# Purpose: explore the MMR dataset.
-## 1. Recode some of the categorical variables.
-## 2. Look at values, missingness, distribution, outliers.
+# Date: Oct 27th, 2025
+# Purpose: select and prepare data used for CTSN generalizability project. 
 
-library(haven)
 library(tidyverse)
-library(skimr)
-library(kableExtra)
 library(janitor)
-library(DescTools)
-library(knitr)
+
+
 ## Read the SAS dataset
 
 mmr <- read_sas("data/mmr_primary.sas7bdat") %>% 
@@ -63,7 +58,7 @@ mmr <- mmr %>% mutate(
   ### Recoded: no = 0 yes = 1
   cardiac_transplant = ifelse(cardiac_transplant == 1, 0, 1),
   
-
+  
   ### Original: no = 1 yes = 2
   ### Recoded: no = 0 yes = 1
   cardiomyoplasty = ifelse(cardiomyoplasty == 1, 0, 1),
@@ -231,117 +226,32 @@ mmr <- mmr %>% mutate(
   ### Recoded: class i = 0 class ii = 1 class iii = 2 class iv = 3 
   nyha24 = nyha24 - 1
   
-) %>% 
-
-## Remove maskid
-select(!maskid)
+) 
 
 
 
+## Select baseline predictors and outcomes of interest.
 
-mmr_skim_summary <- skim(mmr)
-
-
-kable(mmr_skim_summary) %>% 
-  kable_styling(full_width = FALSE) %>% 
-  save_kable("results/mmr_skim_summary.html")
-
-
-## Get complete rate
-complete_rate <- tibble(var = mmr_skim_summary$skim_variable, complete_rate = paste0(round(mmr_skim_summary$complete_rate * 100, 3), "%"))
-write.csv(complete_rate, file = "data/results/complete_rate.csv", row.names = FALSE)
-
-## Set categorical variables to correct type: numeric -> factor
-
-is_binary <- function(x) {
-  vals <- unique(x[!is.na(x)])
-  all(vals %in% c(0, 1, TRUE, FALSE, "0", "1"))
-}
-
-
-mmr <- mmr %>%
-  mutate(across(
-    .cols = everything(),
-    .fns = ~ {
-      if (is_binary(.x)) {
-        as.factor(.x)  # safely convert to factor
-      } else {
-        .x             # leave as-is
-      }
-    }
-  )) %>% 
-  ## Manually convert categorical variables with more than 2 levels
-  mutate(
-    racial_category = as.factor(racial_category),
-    chronic_lung_disease = as.factor(chronic_lung_disease),
-    across(starts_with("mr"), as.factor),
-    across(starts_with("nyha"), as.factor),
-    across(starts_with("ccsc"), as.factor),
-    mace = as.factor(mace)
-    
-  )
+mmr_dat <- mmr %>% select(randomization_assignment,
+                          age, ethnicity, racial_category, 
+                          aneurysmectomy, atrial_fibrillation, 
+                          cabg, cardiac_transplant, cardiomyoplasty, carotid_stenosis, cerebrovascular_disease, chronic_lung_disease,
+                          diabetes, dyslipidemia, 
+                          family_history_coronary,
+                          gastrointestinal_bleeding,
+                          heart_failure, heart_surgery,
+                          icd, infectious_endocarditis, 
+                          liver_disease,
+                          malignancy, myocardial_infarction,
+                          on_iabp, 
+                          pacemaker, pci, peripheral_arterial_disease, peripheral_vascular_disease, prior_sternotomies_num, prior_surgery, psychiatric_disorder,
+                          renal_insufficiency, 
+                          stroke, 
+                          thyroid_disease, tia, tobacco, 
+                          ventricular_arrhythmia, 
+                          echo0_day, lvesvi0, ero0, lvef0, lvsphere0, vc0, lvid_ed0, lvid_es0, mr0, nyha0, ccsc0, first_mace_day, mace)
 
 
 
 
-
-#### Separate Numerical and Categorical Variables ####
-
-## Numerical
-mmr_num <- mmr %>% 
-  ### Select all numerical columns and add the categorical endpoint.
-  select(where(is.numeric), mace)
-
-write.csv(mmr_num, file = "data/mmr_num.csv", row.names = FALSE)
-
-mmr_skim_num_summary <- skim(mmr_num)
-kable(mmr_skim_num_summary) %>% 
-  kable_styling(full_width = FALSE) %>% 
-  save_kable("results/mmr_skim_num_summary.html")
-
-
-## Categorical
-
-mmr_categ <- mmr %>% 
-  ## Select all categorical columns and add the numeric endpoint.
-  select(where(is.factor), first_mace_day)
-
-write.csv(mmr_categ, file = "data/mmr_categ.csv")
-
-
-
-
-
-## Assess outliers
-
-
-summary_with_outliers <- function(df) {
-  detect_outliers <- function(x) {
-    if(!is.numeric(x)) return(NA)
-    ### Remove NAs
-    x <- na.omit(x)
-    Q1 <- quantile(x, 0.25, na.rm = TRUE)
-    Q3 <- quantile(x, 0.75, na.rm = TRUE)
-    IQR <- Q3 - Q1
-    outliers <- x[x < (Q1 - 1.5 * IQR) | x > (Q3 + 1.5 * IQR)]
-    if(length(outliers) == 0) return(NA)
-    return(unique(sort(outliers)))
-  }
-  
-  data.frame(
-    variable = names(df),
-    type = sapply(df, class),
-    n_outliers = sapply(df, function(x) 
-      if(is.numeric(x)) sum(!is.na(detect_outliers(x))) else NA),
-    outliers = I(sapply(df, detect_outliers))
-  )
-}
-
-
-mmr_outliers <- summary_with_outliers(mmr)
-
-mmr_outliers <- mmr_outliers %>% filter(type != "factor", n_outliers != 0, is.na(n_outliers) == FALSE)
-
-mmr_outliers
-
-write.csv(mmr_outliers, file = "data/results/mmr_outliers.csv")
+write.csv(mmr_dat, file = "data/results/mmr_dat_preped.csv", row.names = FALSE)
