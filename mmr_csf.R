@@ -74,6 +74,8 @@ surv_obj_auto <- Surv(mmr_test_survival_time, mmr_test_event_ind)
 c_index_auto <- concordance(surv_obj_auto ~ tau_hat_auto)$concordance
 
 
+
+
   
 ####### Manual Tuning Using Grid Search ###################
 
@@ -174,4 +176,17 @@ print(paste0("Corresponding validation c-index is ", round(cv_cindex[best_idx], 
 ## Manual tuning perform worse than auto tuning
 
 
+
+
+
+####### Evaluate on Test Data ###################
+
+## Using hyperparameters found in Grid search
+tau_hat_best <- predict(mmr_csf, mmr_test_cov)$predictions
+
+### Survival object
+surv_obj_best <- Surv(mmr_test_survival_time, mmr_test_event_ind)
+
+### Calculate concordance index
+c_index_best <- concordance(surv_obj_best ~ tau_hat_best)$concordance
 
