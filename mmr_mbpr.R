@@ -1,20 +1,16 @@
 # Author: Jingyang (Judy) Zhang
-# Date: Oct 27th, 2025
-# Purpose: try causal survival forest on MMR data. 
+# Date: Oct 29th, 2025
+# Purpose: try model based recursive partitioning (MBPR) on MMR data. 
 
 library(tidyverse)
 
 
 
 
-library(grf)
+library(partykit)
+library(caret)
 library(survival)
-library(rsample)
-library(timeROC)
-library(mice)
 
-
-####################### DATA WRANGLING ############################
 
 ## Read the SAS dataset
 
@@ -22,46 +18,16 @@ mmr_dat <- read_csv("data/results/mmr_dat_preped.csv")
 
 ## Drop all missing values except missing values in the outcomes
 
-mmr_dat <- mmr_dat[!apply(mmr_dat[, !names(mmr_dat) %in% c("first_mace_day")], 1, function(x) any(is.na(x))), ]
+#mmr_dat <- mmr_dat[!apply(mmr_dat[, !names(mmr_dat) %in% c("first_mace_day")], 1, function(x) any(is.na(x))), ]
 
-mmr_dat <- mmr_dat %>% mutate(
-  ### Define outcomes
-  
-  Y = first_mace_day,
-  delta = mace
-)
-
-
-## Handle missingness in survival time.
-### Because the completion rate of first_mace_day is only 31.23%, there are lots of missingness in first_mace_day. 
-### Assume first_mace_day is missing at random conditional on covariates and treatment. 
-### Perform multiple imputation using the observed event indicator and other covariates. 
-
-### Specify imputation methods:
-#### numeric/integer variables: use predictive mean matching (pmm).
-#### factors:
-##### 1. 2-level factors: use binary logistic regression (logreg).
-##### 2. Unordered factors: use polytomous logistic regression (polyreg).
-##### 3. Ordered factors: use proportional odds model (polr).
-#### logical variables: treated as binary factor, use logreg.
-
-#### Note: using imputation means observations are no longer independent. 
-
-mmr_dat_imputed <- mice(mmr_dat, m = 5)
-
-mmr_complete <- complete(mmr_dat_imputed, 1)
-
-
-## causal_survival_forest function() requires all variables in the covariate matrix to be numeric.
-mmr_complete_num <- mmr_complete %>% 
-  mutate(across(everything(), ~ as.numeric(as.character(.))))
-  
+## Set NAs in first_mace_day to 0
+mmr_dat$first_mace_day[is.na(mmr_dat$first_mace_day)] <- 0
 
 
 ## Split data into training and testing
 set.seed(123)
 training_ratio <- 0.8
-split <- initial_split(mmr_complete_num, prop = training_ratio)
+split <- initial_split(mmr_dat, prop = training_ratio)
 mmr_train <- training(split)
 mmr_test <- testing(split)
 
@@ -87,8 +53,64 @@ mmr_test_event_ind <- as.vector(mmr_test$mace)
 
 
 
-##################### CSF Using Automatic Tunning ##################
+############## Define Model ############
 
+## event ~ treatment|covariates
+mmr_model_formula <- as.formula("mace ~ randomization_assignment")
+partition_vars <- paste(sort(colnames(mmr_train_cov)), collapse = " + ")
+mmr_mob_formula <- as.formula(paste(deparse(mmr_model_formula), "| (", partition_vars, ")"))
+
+
+
+
+
+
+
+## Define function for fitting the model within each node.
+logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...){
+  glm(y ~ 0 + x, family = binomial, start = start, ...)
+}
+
+
+cox_mob_fit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
+  coxph(Surv(y[,1], y[,2]) ~ x, weights = weights, ...)
+}
+
+
+############## MBRP ############
+
+## Define hyperparameters
+minsize <- 3
+alpha <- 0.05
+catsplit = "binary"
+numsplit = "center"
+nrep = 100000
+
+
+## Define control parameters for the mbrp
+mmr_mob_control <- mob_control(
+  minsize = minsize,
+  bonferroni = FALSE,
+  nrep = nrep,
+  prune = 'none',
+  alpha = alpha,
+  catsplit = catsplit,
+  numsplit = numsplit
+)
+
+
+
+
+mmr_mob_tree <- partykit::mob(
+  formula = mmr_mob_formula,
+  data = mmr_train,
+  fit = logit,
+  control = mmr_mob_control
+)
+
+
+
+plot(mmr_mob_tree)
 
 
 ####### Run on all training data using automatic tunning in causal survival forest function ###################
@@ -99,6 +121,12 @@ mmr_csf_auto <- causal_survival_forest(
   mmr_train_event_ind,
   horizon = 730
 )
+
+
+
+
+
+
 
 ## Evaluate on Test Data
 
@@ -112,30 +140,8 @@ surv_obj_auto <- Surv(mmr_test_survival_time, mmr_test_event_ind)
 ### Calculate concordance index
 c_index_auto <- concordance(surv_obj_auto ~ tau_hat_auto)$concordance
 
-### Compute time-dependent ROC/AUC
-roc_results_auto <- timeROC(
-  T = mmr_test_survival_time,
-  delta = mmr_test_event_ind,
-  marker = tau_hat_auto,
-  cause = 1,
-  weighting = "marginal",
-  times = quantile(mmr_test_survival_time, probs = seq(0.1, 0.9, by = 0.05))
-)
 
 
-
-plot(
-  roc_results_auto$times,
-  roc_results_auto$AUC,
-  type = "b",
-  pch = 19,
-  xlab = "Time",
-  ylab = "AUC(t)",
-  main = "Time-dependent AUC (AUTOC) for Causal Survival Forest"
-)
-abline(h =0.5, col = "red", lty = 2)
-
-AUTOC_overall_auto <- mean(roc_results_auto$AUC, na.rm = TRUE)
 
   
 ####### Manual Tuning Using Grid Search ###################
@@ -161,13 +167,12 @@ k <- 5
 folds <- sample(rep(1:k, length.out = nrow(mmr_train)))
 
 cv_cindex <- numeric(nrow(grid))
-cv_auc <- numeric(nrow(grid))
+
 
 for(i in 1:nrow(grid)){
   print(i)
   params <- grid[i, ]
   fold_cindices <- numeric(5)
-  fold_auc <- numeric(5)
   
   for(k in 1:5){
     ### Split training data into train and validat
@@ -209,31 +214,16 @@ for(i in 1:nrow(grid)){
     ### Evaluate c-index
     surv_obj <- Surv(survival_time_val, event_val)
     fold_cindices[k] <- concordance(surv_obj ~ tau_hat)$concordance
-   
-    roc_results <- timeROC(
-      T = survival_time_val,
-      delta = event_val,
-      marker = tau_hat,
-      cause = 1,
-      weighting = "marginal",
-      times = quantile(survival_time_val, probs = seq(0.1, 0.9, by = 0.005)),
-      iid = FALSE
-    )
-    fold_auc[k] <- mean(roc_results$AUC, na.rm = TRUE)
+    
     
   }
   
   # Average c-index across 5 folds
   cv_cindex[i] <- mean(fold_cindices)
-  cv_auc[i] <- mean(fold_auc)
   
   cat("Grid", i, "/", nrow(grid), ": min.node.size=", params$min.node.size,
       ", mtry=", params$mtry, ", honesty=", params$honesty.fraction,
       ", CV C-index=", round(cv_cindex[i], 3), "\n")
-  
-  cat("Grid", i, "/", nrow(grid), ": min.node.size=", params$min.node.size,
-      ", mtry=", params$mtry, ", honesty=", params$honesty.fraction,
-      ", CV AUC =", round(cv_auc[i], 3), "\n")
   
   
 }
@@ -242,7 +232,7 @@ for(i in 1:nrow(grid)){
 
 
 ### Find the best hyperparameters
-best_idx <- which.max(cv_cindex[cv_auc > 0.5])
+best_idx <- which.max(cv_cindex)
 best_params <- grid[best_idx, ]
 cat("Best hyperparameters found:\n")
 
@@ -259,57 +249,11 @@ print(paste0("Corresponding validation c-index is ", round(cv_cindex[best_idx], 
 ####### Evaluate on Test Data ###################
 
 ## Using hyperparameters found in Grid search
-
-
-mmr_csf_best <- causal_survival_forest(
-  X = cov_train,
-  Y = survival_time_train,
-  W = trt_train,
-  D = event_train,
-  
-  horizon = 730, # Number of days in 2 years
-  target = "survival.probability",
-  num.trees = num_trees,
-  min.node.size = best_params$min.node.size,
-  mtry = best_params$mtry,
-  honesty.fraction =best_params$honesty.fraction
-  
-)
-
-
-
-tau_hat_best <- predict(mmr_csf_best, mmr_test_cov)$predictions
+tau_hat_best <- predict(mmr_csf, mmr_test_cov)$predictions
 
 ### Survival object
 surv_obj_best <- Surv(mmr_test_survival_time, mmr_test_event_ind)
 
 ### Calculate concordance index
 c_index_best <- concordance(surv_obj_best ~ tau_hat_best)$concordance
-
-
-### Compute time-dependent ROC/AUC
-roc_results_best <- timeROC(
-  T = mmr_test_survival_time,
-  delta = mmr_test_event_ind,
-  marker = tau_hat_best,
-  cause = 1,
-  weighting = "marginal",
-  times = quantile(mmr_test_survival_time, probs = seq(0.1, 0.9, by = 0.05))
-)
-
-plot(
-  roc_results_best$times,
-  roc_results_best$AUC,
-  type = "b",
-  pch = 19,
-  xlab = "Time",
-  ylab = "AUC(t)",
-  main = "Time-dependent AUC (AUTOC) for Causal Survival Forest",
-  ylim = c(0, 0.55)
-)
-abline(h =0.5, col = "red", lty = 2)
-
-AUTOC_overall_best <- mean(roc_results_best$AUC, na.rm = TRUE)
-
-
 
