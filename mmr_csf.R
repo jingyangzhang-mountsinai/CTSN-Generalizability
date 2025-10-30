@@ -14,9 +14,11 @@ library(timeROC)
 library(mice)
 
 
+set.seed(123)
+
 ####################### DATA WRANGLING ############################
 
-## Read the SAS dataset
+## Read the prepared dataset
 
 mmr_dat <- read_csv("data/results/mmr_dat_preped.csv") 
 
@@ -51,15 +53,26 @@ mmr_dat_imputed <- mice(mmr_dat, m = 5)
 
 mmr_complete <- complete(mmr_dat_imputed, 1)
 
+mmr_complete <- mmr_complete %>% select(-Y, -delta)
+
+
+#### Save the imputed MMR data.
+write.csv(mmr_complete, file = "data/results/mmr_dat_complete.csv", row.names = FALSE)
 
 ## causal_survival_forest function() requires all variables in the covariate matrix to be numeric.
 mmr_complete_num <- mmr_complete %>% 
   mutate(across(everything(), ~ as.numeric(as.character(.))))
   
 
+## Separate covariates, treatment, survival time, and event indicator. 
+mmr_cov <- mmr_complete_num %>% select(-first_mace_day, -mace, -randomization_assignment)
+mmr_trt <- as.vector(mmr_complete_num$randomization_assignment)
+mmr_survival_time <- as.vector(mmr_complete_num$first_mace_day)
+mmr_event_ind <- as.vector(mmr_complete_num$mace)
+
 
 ## Split data into training and testing
-set.seed(123)
+
 training_ratio <- 0.8
 split <- initial_split(mmr_complete_num, prop = training_ratio)
 mmr_train <- training(split)
@@ -97,7 +110,8 @@ mmr_csf_auto <- causal_survival_forest(
   mmr_train_survival_time,
   mmr_train_trt,
   mmr_train_event_ind,
-  horizon = 730
+  horizon = 730,
+  target = "survival.probability"
 )
 
 ## Evaluate on Test Data
@@ -169,10 +183,10 @@ for(i in 1:nrow(grid)){
   fold_cindices <- numeric(5)
   fold_auc <- numeric(5)
   
-  for(k in 1:5){
+  for(j in 1:k){
     ### Split training data into train and validat
-    train_idx <- which(folds != k)
-    val_idx <- which(folds == k)
+    train_idx <- which(folds != j)
+    val_idx <- which(folds == j)
     
     #### Get training set
     cov_train <- mmr_train_cov[train_idx,]
@@ -208,7 +222,7 @@ for(i in 1:nrow(grid)){
     
     ### Evaluate c-index
     surv_obj <- Surv(survival_time_val, event_val)
-    fold_cindices[k] <- concordance(surv_obj ~ tau_hat)$concordance
+    fold_cindices[j] <- concordance(surv_obj ~ tau_hat)$concordance
    
     roc_results <- timeROC(
       T = survival_time_val,
@@ -219,7 +233,7 @@ for(i in 1:nrow(grid)){
       times = quantile(survival_time_val, probs = seq(0.1, 0.9, by = 0.005)),
       iid = FALSE
     )
-    fold_auc[k] <- mean(roc_results$AUC, na.rm = TRUE)
+    fold_auc[j] <- mean(roc_results$AUC, na.rm = TRUE)
     
   }
   
@@ -250,35 +264,27 @@ print(best_params)
 print(paste0("Corresponding validation c-index is ", round(cv_cindex[best_idx], digits = 3)))
 
 
-## Manual tuning perform worse than auto tuning
+### Train final model
 
-
-
-
-
-####### Evaluate on Test Data ###################
-
-## Using hyperparameters found in Grid search
-
-
-mmr_csf_best <- causal_survival_forest(
-  X = cov_train,
-  Y = survival_time_train,
-  W = trt_train,
-  D = event_train,
-  
+mmr_csf_final <- causal_survival_forest(
+  X = mmr_train_cov,
+  Y = mmr_train_survival_time,
+  W = mmr_train_trt,
+  D = mmr_train_event_ind,
   horizon = 730, # Number of days in 2 years
   target = "survival.probability",
   num.trees = num_trees,
   min.node.size = best_params$min.node.size,
   mtry = best_params$mtry,
   honesty.fraction =best_params$honesty.fraction
-  
 )
 
 
 
-tau_hat_best <- predict(mmr_csf_best, mmr_test_cov)$predictions
+####### Evaluate on Test Data ###################
+
+### Predict treatment effect on test set
+tau_hat_best <- predict(mmr_csf_final, mmr_test_cov)$predictions
 
 ### Survival object
 surv_obj_best <- Surv(mmr_test_survival_time, mmr_test_event_ind)
@@ -286,30 +292,50 @@ surv_obj_best <- Surv(mmr_test_survival_time, mmr_test_event_ind)
 ### Calculate concordance index
 c_index_best <- concordance(surv_obj_best ~ tau_hat_best)$concordance
 
-
-### Compute time-dependent ROC/AUC
-roc_results_best <- timeROC(
+### Calculate AUC
+roc_results <- timeROC(
   T = mmr_test_survival_time,
   delta = mmr_test_event_ind,
   marker = tau_hat_best,
   cause = 1,
   weighting = "marginal",
-  times = quantile(mmr_test_survival_time, probs = seq(0.1, 0.9, by = 0.05))
+  times = quantile(survival_time_val, probs = seq(0.1, 0.9, by = 0.005)),
+  iid = FALSE
 )
 
-plot(
-  roc_results_best$times,
-  roc_results_best$AUC,
-  type = "b",
-  pch = 19,
-  xlab = "Time",
-  ylab = "AUC(t)",
-  main = "Time-dependent AUC (AUTOC) for Causal Survival Forest",
-  ylim = c(0, 0.55)
+AUTOC_overall_best <- mean(roc_results$AUC, na.rm = TRUE)
+
+
+### Save the model and the parameters
+### Train the model on the entire dataset
+
+mmr_csf_final <- causal_survival_forest(
+  X = mmr_cov,
+  Y = mmr_survival_time,
+  W = mmr_trt,
+  D = mmr_event_ind,
+  horizon = 730, # Number of days in 2 years
+  target = "survival.probability",
+  num.trees = num_trees,
+  min.node.size = best_params$min.node.size,
+  mtry = best_params$mtry,
+  honesty.fraction =best_params$honesty.fraction
 )
-abline(h =0.5, col = "red", lty = 2)
 
-AUTOC_overall_best <- mean(roc_results_best$AUC, na.rm = TRUE)
+params_best <- list(
+  horizon = 730, # Number of days in 2 years
+  target = "survival.probability",
+  num.trees = num_trees,
+  min.node.size = best_params$min.node.size,
+  mtry = best_params$mtry,
+  honesty.fraction =best_params$honesty.fraction
+)
 
+final_csf_params <- list(
+  model = mmr_csf_final,
+  params = params_best
+)
+
+saveRDS(final_csf_params, file = "results/trained_csf_params.rds")
 
 
