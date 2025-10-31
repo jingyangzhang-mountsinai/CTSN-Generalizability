@@ -89,8 +89,20 @@ RES<-map(L,
          ~{FittingCSF(data= data, treatment="arm_n", Time2_event="fu_time", event="fu_stat",
                       predictors=.x, params)
          })
-TOCs<-lapply(names(RES), function(x){(RES[[x]]$rate$TOC %>% as.data.frame() %>% mutate(set=x))}) %>% bind_rows() %>% mutate(conf.low=estimate-std.err, conf.high=estimate+std.err)
+
+
+TOCs<-lapply(names(RES), function(x){(RES[[x]]$rate$TOC %>% as.data.frame() %>% 
+                                        mutate(set=x))}) %>% bind_rows() %>% 
+  mutate(conf.low=estimate-std.err, conf.high=estimate+std.err)
+
+
+
+
+
+
 AUTOCS<-lapply(names(RES), function(x){(RES[[x]]$rate[1:3] %>% as.data.frame() %>% mutate(set=x))}) %>% bind_rows() %>% mutate(conf.low=estimate-std.err, conf.high=estimate+std.err, set=factor(set, levels=names(ann.colors$set)))
+
+
 xAI<-lapply(names(RES), function(x){(RES[[x]]$xai %>% as.data.frame() %>% mutate(set=x))}) %>%
   bind_rows() %>% mutate(estimate=if_else(term=='AGE',10*estimate, estimate))
 AUTOCS %>% ggplot(aes(x=set, y=estimate, fill=set, color=set))+
